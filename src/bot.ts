@@ -465,10 +465,10 @@ export async function handleFeishuMessage(params: {
       ? `Feishu message in group ${ctx.chatId}`
       : `Feishu DM from ${ctx.senderOpenId}`;
 
-    core.system.enqueueSystemEvent(`${inboundLabel}: ${preview}`, {
-      sessionKey: route.sessionKey,
-      contextKey: `feishu:message:${ctx.chatId}:${ctx.messageId}`,
-    });
+    //core.system.enqueueSystemEvent(`${inboundLabel}: ${preview}`, {
+    //  sessionKey: route.sessionKey,
+    //  contextKey: `feishu:message:${ctx.chatId}:${ctx.messageId}`,
+    //});
 
     // Resolve media from message
     const mediaMaxBytes = (feishuCfg?.mediaMaxMb ?? 30) * 1024 * 1024; // 30MB default
