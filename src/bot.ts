@@ -18,6 +18,16 @@ import { createFeishuReplyDispatcher } from "./reply-dispatcher.js";
 import { getMessageFeishu } from "./send.js";
 import { downloadImageFeishu, downloadMessageResourceFeishu } from "./media.js";
 
+// In-memory cache for deduplicating message events (handles Feishu webhook retries)
+const processedMessageIds = new Set<string>();
+
+// Periodic cleanup to prevent memory leaks (clear every 10 minutes)
+setInterval(() => {
+  if (processedMessageIds.size > 2000) {
+    processedMessageIds.clear();
+  }
+}, 10 * 60 * 1000); // 10 minutes
+
 export type FeishuMessageEvent = {
   sender: {
     sender_id: {
@@ -377,6 +387,16 @@ export async function handleFeishuMessage(params: {
   const feishuCfg = cfg.channels?.feishu as FeishuConfig | undefined;
   const log = runtime?.log ?? console.log;
   const error = runtime?.error ?? console.error;
+
+  // Deduplication check: if we've already processed this message ID, skip it.
+  const msgId = event?.message?.message_id;
+  if (msgId && processedMessageIds.has(msgId)) {
+    log(`feishu: skipping duplicate message ${msgId} (webhook retry)`);
+    return;
+  }
+  if (msgId) {
+    processedMessageIds.add(msgId);
+  }
 
   const ctx = parseFeishuMessageEvent(event, botOpenId);
   const isGroup = ctx.chatType === "group";
